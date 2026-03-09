@@ -7,27 +7,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Platform,
 } from "react-native";
 import api from "../services/api";
 
 const DAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const MONTHS = [
-  "Tháng 1",
-  "Tháng 2",
-  "Tháng 3",
-  "Tháng 4",
-  "Tháng 5",
-  "Tháng 6",
-  "Tháng 7",
-  "Tháng 8",
-  "Tháng 9",
-  "Tháng 10",
-  "Tháng 11",
-  "Tháng 12",
+  "Th.1",
+  "Th.2",
+  "Th.3",
+  "Th.4",
+  "Th.5",
+  "Th.6",
+  "Th.7",
+  "Th.8",
+  "Th.9",
+  "Th.10",
+  "Th.11",
+  "Th.12",
 ];
 
-// Tạo 7 ngày tiếp theo từ hôm nay
 const getNextDays = () => {
   const days = [];
   for (let i = 0; i < 7; i++) {
@@ -40,6 +38,23 @@ const getNextDays = () => {
 
 const formatDate = (date) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+// Lọc slot đã qua nếu là hôm nay
+const filterPassedSlots = (slots, selectedDate) => {
+  const now = new Date();
+  const today = formatDate(now);
+  const selected = formatDate(selectedDate);
+
+  if (selected !== today) return slots; // không phải hôm nay → giữ nguyên
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  return slots.filter((slot) => {
+    const [h, m] = slot.split(":").map(Number);
+    const slotMinutes = h * 60 + m;
+    return slotMinutes > currentMinutes; // chỉ giữ slot sau giờ hiện tại
+  });
 };
 
 export default function BookingScreen({ route, navigation }) {
@@ -62,7 +77,13 @@ export default function BookingScreen({ route, navigation }) {
       const res = await api.get(`/doctors/${doctorId}/available-slots`, {
         params: { date: formatDate(selectedDate) },
       });
-      setAvailableSlots(res.data.availableSlots || []);
+
+      // Lọc slot đã qua nếu là hôm nay
+      const filtered = filterPassedSlots(
+        res.data.availableSlots || [],
+        selectedDate,
+      );
+      setAvailableSlots(filtered);
     } catch (err) {
       console.log(err);
       setAvailableSlots([]);
@@ -72,9 +93,6 @@ export default function BookingScreen({ route, navigation }) {
   };
 
   const handleBooking = async () => {
-    if (!selectedDate || !selectedSlot)
-      return Alert.alert("Lỗi", "Vui lòng chọn ngày và giờ khám");
-
     Alert.alert(
       "Xác nhận đặt lịch",
       `Bác sĩ: ${doctorName}\nNgày: ${selectedDate.toLocaleDateString("vi-VN")}\nGiờ: ${selectedSlot}`,
@@ -109,6 +127,8 @@ export default function BookingScreen({ route, navigation }) {
       ],
     );
   };
+
+  const canBook = selectedDate && selectedSlot && !booking;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -219,17 +239,15 @@ export default function BookingScreen({ route, navigation }) {
 
       {/* Nút đặt lịch */}
       <TouchableOpacity
-        style={[
-          styles.bookBtn,
-          (!selectedDate || !selectedSlot) && styles.bookBtnDisabled,
-        ]}
-        onPress={handleBooking}
-        disabled={booking || !selectedDate || !selectedSlot}
+        style={[styles.bookBtn, !canBook && styles.bookBtnDisabled]}
+        onPress={canBook ? handleBooking : null}
       >
         {booking ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.bookBtnText}>Xác nhận đặt lịch</Text>
+          <Text style={styles.bookBtnText}>
+            {canBook ? "Xác nhận đặt lịch" : "Vui lòng chọn ngày và giờ"}
+          </Text>
         )}
       </TouchableOpacity>
 
@@ -281,7 +299,8 @@ const styles = StyleSheet.create({
   },
   dayMonth: { fontSize: 11, color: "#aaa" },
   dayTextActive: { color: "#fff" },
-  slotGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  // ← Sửa: bỏ gap, dùng margin trên từng slot
+  slotGrid: { flexDirection: "row", flexWrap: "wrap" },
   slotBtn: {
     paddingHorizontal: 18,
     paddingVertical: 10,
@@ -289,6 +308,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f4ff",
     borderWidth: 1,
     borderColor: "#c5d5fb",
+    margin: 5,
   },
   slotBtnActive: { backgroundColor: "#1a73e8", borderColor: "#1a73e8" },
   slotText: { color: "#1a73e8", fontWeight: "600", fontSize: 14 },
@@ -300,6 +320,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 14,
     padding: 16,
+    marginBottom: 8,
   },
   summaryTitle: {
     fontWeight: "bold",
@@ -323,6 +344,6 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
   },
-  bookBtnDisabled: { backgroundColor: "#aaa" },
+  bookBtnDisabled: { backgroundColor: "#b0bec5" },
   bookBtnText: { color: "#fff", fontWeight: "bold", fontSize: 17 },
 });
