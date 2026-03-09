@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  Platform,
 } from "react-native";
 import api from "../services/api";
 
@@ -40,21 +42,27 @@ const formatDate = (date) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-// Lọc slot đã qua nếu là hôm nay
 const filterPassedSlots = (slots, selectedDate) => {
   const now = new Date();
   const today = formatDate(now);
   const selected = formatDate(selectedDate);
-
-  if (selected !== today) return slots; // không phải hôm nay → giữ nguyên
-
+  if (selected !== today) return slots;
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
   return slots.filter((slot) => {
     const [h, m] = slot.split(":").map(Number);
     const slotMinutes = h * 60 + m;
-    return slotMinutes > currentMinutes; // chỉ giữ slot sau giờ hiện tại
+    return slotMinutes > currentMinutes;
   });
+};
+
+// Thay Alert bằng hàm này — hoạt động trên cả web lẫn mobile
+const showAlert = (title, message, onOk) => {
+  if (Platform.OS === "web") {
+    const confirmed = window.confirm(`${title}\n\n${message}`);
+    if (confirmed && onOk) onOk();
+  } else {
+    Alert.alert(title, message, [{ text: "OK", onPress: onOk }]);
+  }
 };
 
 export default function BookingScreen({ route, navigation }) {
@@ -64,6 +72,7 @@ export default function BookingScreen({ route, navigation }) {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false); // ← modal xác nhận
   const days = getNextDays();
 
   useEffect(() => {
@@ -77,8 +86,6 @@ export default function BookingScreen({ route, navigation }) {
       const res = await api.get(`/doctors/${doctorId}/available-slots`, {
         params: { date: formatDate(selectedDate) },
       });
-
-      // Lọc slot đã qua nếu là hôm nay
       const filtered = filterPassedSlots(
         res.data.availableSlots || [],
         selectedDate,
@@ -93,39 +100,26 @@ export default function BookingScreen({ route, navigation }) {
   };
 
   const handleBooking = async () => {
-    Alert.alert(
-      "Xác nhận đặt lịch",
-      `Bác sĩ: ${doctorName}\nNgày: ${selectedDate.toLocaleDateString("vi-VN")}\nGiờ: ${selectedSlot}`,
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xác nhận",
-          onPress: async () => {
-            try {
-              setBooking(true);
-              await api.post("/appointments", {
-                doctorId,
-                date: formatDate(selectedDate),
-                timeSlot: selectedSlot,
-              });
-              Alert.alert("🎉 Thành công!", "Đặt lịch khám thành công!", [
-                {
-                  text: "OK",
-                  onPress: () => navigation.navigate("Appointments"),
-                },
-              ]);
-            } catch (err) {
-              Alert.alert(
-                "Lỗi",
-                err.response?.data?.message || "Không thể đặt lịch",
-              );
-            } finally {
-              setBooking(false);
-            }
-          },
-        },
-      ],
-    );
+    try {
+      setBooking(true);
+      setShowConfirm(false);
+      await api.post("/appointments", {
+        doctorId,
+        date: formatDate(selectedDate),
+        timeSlot: selectedSlot,
+      });
+      showAlert("🎉 Thành công!", "Đặt lịch khám thành công!", () => {
+        navigation.navigate("Appointments");
+      });
+    } catch (err) {
+      showAlert(
+        "Lỗi",
+        err.response?.data?.message || "Không thể đặt lịch",
+        null,
+      );
+    } finally {
+      setBooking(false);
+    }
   };
 
   const canBook = selectedDate && selectedSlot && !booking;
@@ -179,7 +173,6 @@ export default function BookingScreen({ route, navigation }) {
       {/* Chọn giờ */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>⏰ Chọn giờ khám</Text>
-
         {!selectedDate ? (
           <Text style={styles.hint}>← Vui lòng chọn ngày trước</Text>
         ) : loadingSlots ? (
@@ -240,7 +233,7 @@ export default function BookingScreen({ route, navigation }) {
       {/* Nút đặt lịch */}
       <TouchableOpacity
         style={[styles.bookBtn, !canBook && styles.bookBtnDisabled]}
-        onPress={canBook ? handleBooking : null}
+        onPress={() => canBook && setShowConfirm(true)}
       >
         {booking ? (
           <ActivityIndicator color="#fff" />
@@ -250,6 +243,45 @@ export default function BookingScreen({ route, navigation }) {
           </Text>
         )}
       </TouchableOpacity>
+
+      {/* Modal xác nhận — hoạt động trên cả web lẫn mobile */}
+      <Modal visible={showConfirm} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Xác nhận đặt lịch</Text>
+            <View style={styles.modalBody}>
+              <View style={styles.modalRow}>
+                <Text style={styles.modalLabel}>Bác sĩ</Text>
+                <Text style={styles.modalValue}>{doctorName}</Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Text style={styles.modalLabel}>Ngày khám</Text>
+                <Text style={styles.modalValue}>
+                  {selectedDate?.toLocaleDateString("vi-VN")}
+                </Text>
+              </View>
+              <View style={styles.modalRow}>
+                <Text style={styles.modalLabel}>Giờ khám</Text>
+                <Text style={styles.modalValue}>{selectedSlot}</Text>
+              </View>
+            </View>
+            <View style={styles.modalBtns}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setShowConfirm(false)}
+              >
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={handleBooking}
+              >
+                <Text style={styles.modalConfirmText}>Xác nhận</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -299,7 +331,6 @@ const styles = StyleSheet.create({
   },
   dayMonth: { fontSize: 11, color: "#aaa" },
   dayTextActive: { color: "#fff" },
-  // ← Sửa: bỏ gap, dùng margin trên từng slot
   slotGrid: { flexDirection: "row", flexWrap: "wrap" },
   slotBtn: {
     paddingHorizontal: 18,
@@ -346,4 +377,54 @@ const styles = StyleSheet.create({
   },
   bookBtnDisabled: { backgroundColor: "#b0bec5" },
   bookBtnText: { color: "#fff", fontWeight: "bold", fontSize: 17 },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    width: "85%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  modalBody: { marginBottom: 20 },
+  modalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  modalLabel: { color: "#888" },
+  modalValue: { fontWeight: "600", color: "#333" },
+  modalBtns: { flexDirection: "row", justifyContent: "space-between" },
+  modalCancelBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: "#f5f5f5",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  modalCancelText: { color: "#666", fontWeight: "600" },
+  modalConfirmBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: "#1a73e8",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  modalConfirmText: { color: "#fff", fontWeight: "bold" },
 });
