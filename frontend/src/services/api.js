@@ -1,8 +1,11 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
-// Thay 192.168.x.x bằng IP máy tính của bạn (chạy ipconfig để xem)
-const BASE_URL = "http://192.168.0.101:5000/api";
+const BASE_URL =
+  Platform.OS === "web"
+    ? "http://localhost:5000/api" // chạy trên web (browser)
+    : "http://192.168.0.101:5000/api"; // chạy trên điện thoại
 
 const api = axios.create({ baseURL: BASE_URL });
 
