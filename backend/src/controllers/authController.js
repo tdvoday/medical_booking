@@ -69,7 +69,15 @@ const login = async (req, res) => {
   }
 };
 
-const getMe = async (req, res) => res.json({ user: req.user });
+const getMe = async (req, res) => {
+  try {
+    // Lấy user mới nhất từ DB thay vì dùng req.user cũ
+    const user = await User.findById(req.user._id);
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 const updateProfile = async (req, res) => {
   try {
