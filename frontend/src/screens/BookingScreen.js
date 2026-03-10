@@ -108,15 +108,29 @@ export default function BookingScreen({ route, navigation }) {
         date: formatDate(selectedDate),
         timeSlot: selectedSlot,
       });
-      showAlert("🎉 Thành công!", "Đặt lịch khám thành công!", () => {
-        navigation.navigate("Appointments");
+
+      // ✅ Chuyển sang tab Appointments sau khi đặt lịch thành công
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: "MainTabs",
+            state: {
+              routes: [
+                { name: "Home" },
+                { name: "Appointments" }, // ← chuyển tới tab này
+              ],
+              index: 1, // ← index 1 = tab Appointments
+            },
+          },
+        ],
       });
     } catch (err) {
-      showAlert(
-        "Lỗi",
-        err.response?.data?.message || "Không thể đặt lịch",
-        null,
-      );
+      if (Platform.OS === "web") {
+        window.alert(
+          "Lỗi!\n\n" + (err.response?.data?.message || "Không thể đặt lịch"),
+        );
+      }
     } finally {
       setBooking(false);
     }
