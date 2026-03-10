@@ -3,11 +3,13 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import DoctorsPage from "./pages/DoctorsPage";
+import PatientsPage from "./pages/PatientsPage";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "📊 Tổng quan" },
   { key: "appointments", label: "📅 Lịch khám" },
   { key: "doctors", label: "👨‍⚕️ Bác sĩ" },
+  { key: "patients", label: "👥 Bệnh nhân" },
 ];
 
 export default function App() {
@@ -60,6 +62,7 @@ export default function App() {
           {activePage === "dashboard" && <DashboardPage />}
           {activePage === "appointments" && <AppointmentsPage />}
           {activePage === "doctors" && <DoctorsPage />}
+          {activePage === "patients" && <PatientsPage />}
         </div>
       </div>
     </div>
