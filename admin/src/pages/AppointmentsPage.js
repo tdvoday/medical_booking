@@ -51,7 +51,13 @@ export default function AppointmentsPage() {
       month: "2-digit",
       year: "numeric",
     });
-
+  // Kiểm tra lịch khám đã qua chưa
+  const isPassed = (date, timeSlot) => {
+    const appointmentDate = new Date(date);
+    const [h, m] = timeSlot.split(":").map(Number);
+    appointmentDate.setHours(h, m, 0, 0);
+    return new Date() > appointmentDate; // true = đã qua giờ khám
+  };
   return (
     <div>
       <h2 style={styles.pageTitle}>📅 Quản lý lịch khám</h2>
@@ -157,25 +163,58 @@ export default function AppointmentsPage() {
                               ✓ Xác nhận
                             </button>
                           )}
-                          {apt.status === "confirmed" && (
-                            <button
-                              style={{
-                                ...styles.actionBtn,
-                                backgroundColor: "#6366f1",
-                              }}
-                              onClick={() => updateStatus(apt._id, "done")}
-                              disabled={updating === apt._id}
-                            >
-                              ✓ Hoàn thành
-                            </button>
-                          )}
+
+                          {apt.status === "confirmed" &&
+                            (isPassed(apt.date, apt.timeSlot) ? (
+                              // Đã qua giờ khám → cho phép bấm Hoàn thành
+                              <button
+                                style={{
+                                  ...styles.actionBtn,
+                                  backgroundColor: "#6366f1",
+                                }}
+                                onClick={() => updateStatus(apt._id, "done")}
+                                disabled={updating === apt._id}
+                              >
+                                ✓ Hoàn thành
+                              </button>
+                            ) : (
+                              // Chưa đến giờ → disable + tooltip
+                              <div style={styles.tooltipWrap}>
+                                <button
+                                  style={{
+                                    ...styles.actionBtn,
+                                    backgroundColor: "#a5b4fc",
+                                    cursor: "not-allowed",
+                                  }}
+                                  disabled
+                                >
+                                  ✓ Hoàn thành
+                                </button>
+                                <span style={styles.tooltip}>
+                                  Chưa đến giờ khám ({apt.timeSlot}{" "}
+                                  {new Date(apt.date).toLocaleDateString(
+                                    "vi-VN",
+                                  )}
+                                  )
+                                </span>
+                              </div>
+                            ))}
+
                           {["pending", "confirmed"].includes(apt.status) && (
                             <button
                               style={{
                                 ...styles.actionBtn,
                                 backgroundColor: "#ef4444",
                               }}
-                              onClick={() => updateStatus(apt._id, "cancelled")}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Hủy lịch khám của ${apt.patient?.name}?`,
+                                  )
+                                ) {
+                                  updateStatus(apt._id, "cancelled");
+                                }
+                              }}
                               disabled={updating === apt._id}
                             >
                               ✕ Hủy
@@ -255,5 +294,20 @@ const styles = {
     cursor: "pointer",
     fontSize: "12px",
     fontWeight: "600",
+  },
+  tooltipWrap: { position: "relative", display: "inline-block" },
+  tooltip: {
+    visibility: "hidden",
+    backgroundColor: "#333",
+    color: "#fff",
+    fontSize: "12px",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    position: "absolute",
+    bottom: "130%",
+    left: "50%",
+    transform: "translateX(-50%)",
+    whiteSpace: "nowrap",
+    zIndex: 10,
   },
 };
