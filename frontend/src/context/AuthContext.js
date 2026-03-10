@@ -14,6 +14,15 @@ export const AuthProvider = ({ children }) => {
       const savedUser = await AsyncStorage.getItem("user");
       if (savedToken && savedUser) {
         setUser(JSON.parse(savedUser));
+        // Lấy thông tin mới nhất từ server mỗi khi mở app
+        try {
+          const res = await api.get("/auth/me");
+          const freshUser = res.data.user;
+          setUser(freshUser);
+          await AsyncStorage.setItem("user", JSON.stringify(freshUser));
+        } catch (err) {
+          console.log("Không thể refresh user:", err);
+        }
       }
       setLoading(false);
     };
@@ -25,6 +34,12 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.setItem("token", res.data.token);
     await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
     setUser(res.data.user);
+    // Sau khi login, lấy full info từ /auth/me
+    try {
+      const me = await api.get("/auth/me");
+      setUser(me.data.user);
+      await AsyncStorage.setItem("user", JSON.stringify(me.data.user));
+    } catch (err) {}
     return res.data;
   };
 
@@ -36,6 +51,13 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  // ← Thêm hàm này để cập nhật user trong context
+  const updateUser = async (updatedData) => {
+    const newUser = { ...user, ...updatedData };
+    setUser(newUser);
+    await AsyncStorage.setItem("user", JSON.stringify(newUser));
+  };
+
   const logout = async () => {
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("user");
@@ -43,7 +65,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

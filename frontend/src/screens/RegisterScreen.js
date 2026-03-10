@@ -4,13 +4,21 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
+
+const showAlert = (title, message) => {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    const { Alert } = require("react-native");
+    Alert.alert(title, message);
+  }
+};
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useContext(AuthContext);
@@ -21,17 +29,26 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name || !phone || !password || !confirm)
-      return Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
-    if (password !== confirm)
-      return Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp");
-    if (password.length < 6)
-      return Alert.alert("Lỗi", "Mật khẩu tối thiểu 6 ký tự");
+    // Validate
+    if (!name || !phone || !password || !confirm) {
+      return showAlert("Lỗi", "Vui lòng điền đầy đủ thông tin");
+    }
+    if (password !== confirm) {
+      return showAlert("Lỗi", "Mật khẩu xác nhận không khớp");
+    }
+    if (password.length < 6) {
+      return showAlert("Lỗi", "Mật khẩu tối thiểu 6 ký tự");
+    }
+    if (!/^(0[3|5|7|8|9])+([0-9]{8})$/.test(phone)) {
+      return showAlert("Lỗi", "Số điện thoại không hợp lệ");
+    }
+
     try {
       setLoading(true);
       await register(name, phone, password);
+      // AuthContext tự động chuyển sang AppStack
     } catch (err) {
-      Alert.alert(
+      showAlert(
         "Đăng ký thất bại",
         err.response?.data?.message || "Lỗi kết nối server",
       );
@@ -57,14 +74,14 @@ export default function RegisterScreen({ navigation }) {
         />
         <TextInput
           style={styles.input}
-          placeholder="Số điện thoại"
+          placeholder="Số điện thoại (VD: 0901234567)"
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
         />
         <TextInput
           style={styles.input}
-          placeholder="Mật khẩu"
+          placeholder="Mật khẩu (tối thiểu 6 ký tự)"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -78,7 +95,7 @@ export default function RegisterScreen({ navigation }) {
         />
 
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleRegister}
           disabled={loading}
         >
@@ -135,6 +152,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
+  buttonDisabled: { backgroundColor: "#b0bec5" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   linkText: { textAlign: "center", marginTop: 20, color: "#666" },
   link: { color: "#1a73e8", fontWeight: "bold" },

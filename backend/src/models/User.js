@@ -45,10 +45,10 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password trước khi lưu
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// ✅ Mới — bỏ next, dùng async thuần
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 // So sánh password khi đăng nhập

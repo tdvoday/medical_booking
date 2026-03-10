@@ -5,12 +5,21 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
+
+// Hàm thay thế Alert — hoạt động trên cả web lẫn mobile
+const showAlert = (title, message) => {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    const { Alert } = require("react-native");
+    Alert.alert(title, message);
+  }
+};
 
 export default function LoginScreen({ navigation }) {
   const { login } = useContext(AuthContext);
@@ -19,13 +28,15 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!phone || !password)
-      return Alert.alert("Lỗi", "Vui lòng nhập đủ thông tin");
+    if (!phone || !password) {
+      return showAlert("Lỗi", "Vui lòng nhập đủ thông tin");
+    }
     try {
       setLoading(true);
       await login(phone, password);
+      // AuthContext tự động chuyển sang AppStack
     } catch (err) {
-      Alert.alert(
+      showAlert(
         "Đăng nhập thất bại",
         err.response?.data?.message || "Lỗi kết nối server",
       );
@@ -58,7 +69,7 @@ export default function LoginScreen({ navigation }) {
       />
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, loading && styles.buttonDisabled]}
         onPress={handleLogin}
         disabled={loading}
       >
@@ -114,6 +125,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
+  buttonDisabled: { backgroundColor: "#b0bec5" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   linkText: { textAlign: "center", marginTop: 20, color: "#666" },
   link: { color: "#1a73e8", fontWeight: "bold" },
