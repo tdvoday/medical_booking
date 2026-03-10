@@ -10,21 +10,31 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const loadStorage = async () => {
-      const savedToken = await AsyncStorage.getItem("token");
-      const savedUser = await AsyncStorage.getItem("user");
-      if (savedToken && savedUser) {
-        setUser(JSON.parse(savedUser));
-        // Lấy thông tin mới nhất từ server mỗi khi mở app
-        try {
-          const res = await api.get("/auth/me");
-          const freshUser = res.data.user;
-          setUser(freshUser);
-          await AsyncStorage.setItem("user", JSON.stringify(freshUser));
-        } catch (err) {
-          console.log("Không thể refresh user:", err);
+      try {
+        const savedToken = await AsyncStorage.getItem("token");
+        const savedUser = await AsyncStorage.getItem("user");
+
+        if (savedToken && savedUser) {
+          // Hiển thị user từ storage trước
+          setUser(JSON.parse(savedUser));
+
+          // Sau đó cập nhật từ server
+          try {
+            const res = await api.get("/auth/me");
+            const freshUser = res.data.user;
+            setUser(freshUser);
+            await AsyncStorage.setItem("user", JSON.stringify(freshUser));
+          } catch (err) {
+            // Nếu lỗi server thì vẫn giữ user từ storage
+            // KHÔNG xóa user ở đây
+            console.log("Không thể refresh từ server, dùng dữ liệu local");
+          }
         }
+      } catch (err) {
+        console.log("Lỗi load storage:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     loadStorage();
   }, []);
@@ -34,7 +44,6 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.setItem("token", res.data.token);
     await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
     setUser(res.data.user);
-    // Sau khi login, lấy full info từ /auth/me
     try {
       const me = await api.get("/auth/me");
       setUser(me.data.user);
@@ -51,7 +60,6 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  // ← Thêm hàm này để cập nhật user trong context
   const updateUser = async (updatedData) => {
     const newUser = { ...user, ...updatedData };
     setUser(newUser);
