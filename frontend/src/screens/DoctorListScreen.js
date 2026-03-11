@@ -48,6 +48,17 @@ export default function DoctorListScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backIcon}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Danh sách bác sĩ</Text>
+        <View style={{ width: 36 }} />
+      </View>
       {/* Search */}
       <View style={styles.searchBox}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -188,4 +199,23 @@ const styles = StyleSheet.create({
   arrow: { fontSize: 24, color: "#ccc" },
   empty: { alignItems: "center", marginTop: 60 },
   emptyText: { color: "#888", marginTop: 12, fontSize: 15 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1a73e8",
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backIcon: { color: "#fff", fontSize: 26, fontWeight: "bold", lineHeight: 30 },
 });

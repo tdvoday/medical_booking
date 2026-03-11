@@ -42,6 +42,16 @@ export default function DoctorDetailScreen({ route, navigation }) {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backIcon}>‹ Quay lại</Text>
+          {/* <Text style={styles.backText}>Quay lại</Text> */}
+        </TouchableOpacity>
+      </View>
       {/* Header bác sĩ */}
       <View style={styles.header}>
         <View style={styles.avatar}>
@@ -126,6 +136,27 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     paddingHorizontal: 20,
   },
+  header: {
+    backgroundColor: "#1a73e8",
+    paddingTop: 50,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    color: "#fff",
+  },
+  backIcon: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    paddingHorizontal: 6,
+    borderRadius: 4,
+  },
+  // backText: { color: "#fff", fontSize: 20, fontWeight: "650" },
   avatar: {
     backgroundColor: "#fff",
     borderRadius: 50,
