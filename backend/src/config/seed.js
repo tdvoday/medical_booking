@@ -32,10 +32,10 @@ const seedData = async () => {
   console.log("✅ Đã kết nối MongoDB");
 
   // Xóa dữ liệu cũ
-  await User.deleteMany({});
-  await Doctor.deleteMany({});
-  await Appointment.deleteMany({});
-  console.log("🗑️  Đã xóa dữ liệu cũ");
+  // await User.deleteMany({});
+  // await Doctor.deleteMany({});
+  // await Appointment.deleteMany({});
+  // console.log("🗑️  Đã xóa dữ liệu cũ");
 
   // Tạo users
   const hashedPw = await bcrypt.hash("123456", 12);
@@ -69,59 +69,26 @@ const seedData = async () => {
   // Tạo bác sĩ
   const doctors = await Doctor.insertMany([
     {
-      name: "BS. Nguyễn Hoàng Nam",
+      name: "BS. Nguyễn Văn An",
       specialty: "Nội tổng quát",
+      phone: "0911000001",
+      password: "123456", // ← thêm
       experience: 10,
-      rating: 4.8,
       fee: 200000,
-      description: "Chuyên gia khám và điều trị các bệnh nội khoa tổng quát",
-      workingSchedule: weekdaySchedule,
+      rating: 4.8,
+      workingSchedule: weekdays,
     },
     {
-      name: "BS. Lê Thị Thu Hà",
+      name: "BS. Trần Thị Bình",
       specialty: "Nhi khoa",
+      phone: "0911000002",
+      password: "123456", // ← thêm
       experience: 8,
-      rating: 4.9,
-      fee: 220000,
-      description: "Chuyên khám và điều trị bệnh trẻ em từ 0-15 tuổi",
-      workingSchedule: weekdaySchedule,
-    },
-    {
-      name: "BS. Phạm Minh Đức",
-      specialty: "Tim mạch",
-      experience: 15,
-      rating: 4.7,
-      fee: 300000,
-      description: "Chuyên gia tim mạch, điều trị tăng huyết áp",
-      workingSchedule: weekdaySchedule,
-    },
-    {
-      name: "BS. Trần Văn Khoa",
-      specialty: "Da liễu",
-      experience: 6,
-      rating: 4.6,
-      fee: 180000,
-      description: "Điều trị các bệnh về da: mụn, viêm da, nấm da",
-      workingSchedule: weekdaySchedule,
-    },
-    {
-      name: "BS. Ngô Thị Lan",
-      specialty: "Sản phụ khoa",
-      experience: 12,
-      rating: 4.9,
       fee: 250000,
-      description: "Khám thai định kỳ, điều trị bệnh phụ khoa",
-      workingSchedule: weekdaySchedule,
-    },
-    {
-      name: "BS. Võ Thanh Tùng",
-      specialty: "Xương khớp",
-      experience: 9,
       rating: 4.7,
-      fee: 220000,
-      description: "Điều trị thoát vị đĩa đệm, thoái hóa khớp",
-      workingSchedule: weekdaySchedule,
+      workingSchedule: weekdays,
     },
+    // ... các bác sĩ khác thêm phone/password tương tự
   ]);
   console.log(`👨‍⚕️ Đã tạo ${doctors.length} bác sĩ`);
 

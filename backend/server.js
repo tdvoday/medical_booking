@@ -17,7 +17,11 @@ app.use("/api/auth", require("./src/routes/authRoutes"));
 app.use("/api/doctors", require("./src/routes/doctorRoutes"));
 app.use("/api/appointments", require("./src/routes/appointmentRoutes"));
 app.use("/api/admin", require("./src/routes/adminRoutes"));
-
+app.use("/api/doctor-auth", require("./src/routes/doctorAuthRoutes"));
+app.use(
+  "/api/doctor-appointments",
+  require("./src/routes/doctorAppointmentRoutes"),
+);
 // Health check
 app.get("/", (req, res) => {
   res.json({ message: "API đặt lịch khám đang chạy!" });
