@@ -22,6 +22,7 @@ export default function AppointmentsPage() {
   const [filterDate, setFilterDate] = useState("");
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState(null);
+  const [searchDoctor, setSearchDoctor] = useState("");
 
   useEffect(() => {
     fetchAppointments();
@@ -65,8 +66,12 @@ export default function AppointmentsPage() {
   // Lọc theo tên bệnh nhân ở phía client
   const filtered = appointments.filter(
     (apt) =>
-      apt.patient?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      apt.patient?.phone?.includes(search),
+      (apt.patient?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        apt.patient?.phone?.includes(search)) &&
+      (apt.doctor?.name?.toLowerCase().includes(searchDoctor.toLowerCase()) ||
+        apt.doctor?.specialty
+          ?.toLowerCase()
+          .includes(searchDoctor.toLowerCase())),
   );
 
   return (
@@ -109,6 +114,21 @@ export default function AppointmentsPage() {
           />
           {filterDate && (
             <button style={styles.clearBtn} onClick={() => setFilterDate("")}>
+              ✕
+            </button>
+          )}
+        </div>
+        {/* Tìm theo bác sĩ */}
+        <div style={styles.searchBox}>
+          <span>👨‍⚕️</span>
+          <input
+            style={styles.searchInput}
+            placeholder="Tìm tên bác sĩ, chuyên khoa..."
+            value={searchDoctor}
+            onChange={(e) => setSearchDoctor(e.target.value)}
+          />
+          {searchDoctor && (
+            <button style={styles.clearBtn} onClick={() => setSearchDoctor("")}>
               ✕
             </button>
           )}
