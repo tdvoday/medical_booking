@@ -2,9 +2,10 @@ import React, { useContext } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { ActivityIndicator, View, Text } from "react-native";
 import { AuthContext } from "../context/AuthContext";
+import { ActivityIndicator, View } from "react-native";
 
+// Patient screens
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -14,100 +15,110 @@ import BookingScreen from "../screens/BookingScreen";
 import AppointmentScreen from "../screens/AppointmentScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 
+// Doctor screens
+import DoctorLoginScreen from "../screens/doctor/DoctorLoginScreen";
+import DoctorHomeScreen from "../screens/doctor/DoctorHomeScreen";
+import DoctorScheduleScreen from "../screens/doctor/DoctorScheduleScreen";
+import DoctorAppointmentDetailScreen from "../screens/doctor/DoctorAppointmentDetailScreen";
+import DoctorProfileScreen from "../screens/doctor/DoctorProfileScreen";
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const DoctorTab = createBottomTabNavigator();
 
-function AuthStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-    </Stack.Navigator>
-  );
-}
-
-// Bottom tab navigator
-function MainTabs() {
+// Patient bottom tabs
+function PatientTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#1a73e8",
-        tabBarInactiveTintColor: "#999",
-        tabBarStyle: { paddingBottom: 5, height: 60 },
-        tabBarLabelStyle: { fontSize: 12 },
-      }}
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: "#1a73e8" }}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{
-          tabBarLabel: "Trang chủ",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏠</Text>,
-        }}
+        options={{ tabBarLabel: "Trang chủ", tabBarIcon: () => "🏠" }}
       />
       <Tab.Screen
         name="Appointments"
         component={AppointmentScreen}
-        options={{
-          tabBarLabel: "Lịch khám",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📅</Text>,
-        }}
+        options={{ tabBarLabel: "Lịch khám", tabBarIcon: () => "📅" }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          tabBarLabel: "Cá nhân",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>👤</Text>,
-        }}
+        options={{ tabBarLabel: "Cá nhân", tabBarIcon: () => "👤" }}
       />
     </Tab.Navigator>
   );
 }
 
-// Stack bao ngoài để có thể navigate tới DoctorList, Booking...
-function AppStack() {
+// Doctor bottom tabs
+function DoctorTabs() {
   return (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="MainTabs"
-        component={MainTabs}
-        options={{ headerShown: false }}
+    <DoctorTab.Navigator
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: "#1a73e8" }}
+    >
+      <DoctorTab.Screen
+        name="DoctorHome"
+        component={DoctorHomeScreen}
+        options={{ tabBarLabel: "Trang chủ", tabBarIcon: () => "🏠" }}
       />
-      <Stack.Screen
-        name="DoctorList"
-        component={DoctorListScreen}
-        options={{ title: "Danh sách bác sĩ" }}
+      <DoctorTab.Screen
+        name="DoctorSchedule"
+        component={DoctorScheduleScreen}
+        options={{ tabBarLabel: "Lịch khám", tabBarIcon: () => "📅" }}
       />
-      <Stack.Screen
-        name="DoctorDetail"
-        component={DoctorDetailScreen}
-        options={{ title: "Thông tin bác sĩ" }}
+      <DoctorTab.Screen
+        name="DoctorProfile"
+        component={DoctorProfileScreen}
+        options={{ tabBarLabel: "Hồ sơ", tabBarIcon: () => "👨‍⚕️" }}
       />
-      <Stack.Screen
-        name="Booking"
-        component={BookingScreen}
-        options={{ title: "Đặt lịch khám" }}
-      />
-    </Stack.Navigator>
+    </DoctorTab.Navigator>
   );
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useContext(AuthContext);
+  const { user, doctor, loading } = useContext(AuthContext);
 
-  if (loading) {
+  if (loading)
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#1a73e8" />
       </View>
     );
-  }
 
   return (
     <NavigationContainer>
-      {user ? <AppStack /> : <AuthStack />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {/* Chưa đăng nhập → hiện cả 2 login */}
+        {!user && !doctor && (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="DoctorLogin" component={DoctorLoginScreen} />
+          </>
+        )}
+
+        {/* Đã đăng nhập là Patient */}
+        {user && !doctor && (
+          <>
+            <Stack.Screen name="MainTabs" component={PatientTabs} />
+            <Stack.Screen name="DoctorList" component={DoctorListScreen} />
+            <Stack.Screen name="DoctorDetail" component={DoctorDetailScreen} />
+            <Stack.Screen name="Booking" component={BookingScreen} />
+          </>
+        )}
+
+        {/* Đã đăng nhập là Doctor */}
+        {doctor && !user && (
+          <>
+            <Stack.Screen name="DoctorTabs" component={DoctorTabs} />
+            <Stack.Screen
+              name="DoctorAppointmentDetail"
+              component={DoctorAppointmentDetailScreen}
+            />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

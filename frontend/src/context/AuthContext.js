@@ -1,34 +1,42 @@
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../services/api";
+import api, { doctorApi } from "../services/api";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [doctor, setDoctor] = useState(null); // ← thêm
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadStorage = async () => {
       try {
+        // Load patient
         const savedToken = await AsyncStorage.getItem("token");
         const savedUser = await AsyncStorage.getItem("user");
-
         if (savedToken && savedUser) {
-          // Hiển thị user từ storage trước
           setUser(JSON.parse(savedUser));
-
-          // Sau đó cập nhật từ server
           try {
             const res = await api.get("/auth/me");
-            const freshUser = res.data.user;
-            setUser(freshUser);
-            await AsyncStorage.setItem("user", JSON.stringify(freshUser));
-          } catch (err) {
-            // Nếu lỗi server thì vẫn giữ user từ storage
-            // KHÔNG xóa user ở đây
-            console.log("Không thể refresh từ server, dùng dữ liệu local");
-          }
+            setUser(res.data.user);
+            await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
+          } catch (err) {}
+        }
+
+        // Load doctor
+        const doctorToken = await AsyncStorage.getItem("doctorToken");
+        const savedDoctor = await AsyncStorage.getItem("doctor");
+        if (doctorToken && savedDoctor) {
+          setDoctor(JSON.parse(savedDoctor));
+          try {
+            const res = await doctorApi.get("/doctor-auth/me");
+            setDoctor(res.data.doctor);
+            await AsyncStorage.setItem(
+              "doctor",
+              JSON.stringify(res.data.doctor),
+            );
+          } catch (err) {}
         }
       } catch (err) {
         console.log("Lỗi load storage:", err);
@@ -72,9 +80,34 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // ← Doctor login/logout
+  const doctorLogin = async (phone, password) => {
+    const res = await doctorApi.post("/doctor-auth/login", { phone, password });
+    await AsyncStorage.setItem("doctorToken", res.data.token);
+    await AsyncStorage.setItem("doctor", JSON.stringify(res.data.doctor));
+    setDoctor(res.data.doctor);
+    return res.data;
+  };
+
+  const doctorLogout = async () => {
+    await AsyncStorage.removeItem("doctorToken");
+    await AsyncStorage.removeItem("doctor");
+    setDoctor(null);
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, updateUser }}
+      value={{
+        user,
+        doctor,
+        loading,
+        login,
+        register,
+        logout,
+        updateUser,
+        doctorLogin,
+        doctorLogout,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -85,6 +85,15 @@ export default function LoginScreen({ navigation }) {
           Chưa có tài khoản? <Text style={styles.link}>Đăng ký ngay</Text>
         </Text>
       </TouchableOpacity>
+      {/* Nút chuyển sang Doctor Login */}
+      <TouchableOpacity
+        style={styles.doctorBtn}
+        onPress={() => navigation.navigate("DoctorLogin")}
+      >
+        <Text style={styles.doctorBtnText}>
+          👨‍⚕️ Đăng nhập với tư cách Bác sĩ
+        </Text>
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 }
@@ -129,4 +138,13 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   linkText: { textAlign: "center", marginTop: 20, color: "#666" },
   link: { color: "#1a73e8", fontWeight: "bold" },
+  doctorBtn: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#1a73e8",
+    borderRadius: 10,
+    padding: 14,
+    alignItems: "center",
+  },
+  doctorBtnText: { color: "#1a73e8", fontWeight: "600", fontSize: 14 },
 });
